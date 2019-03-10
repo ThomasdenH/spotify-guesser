@@ -1,5 +1,6 @@
 # Parcel
 .cache
+dist
 
 # Package management
 node_modules
