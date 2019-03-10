@@ -1,0 +1,6 @@
+# Parcel
+dist
+.cache
+
+# Package management
+node_modules

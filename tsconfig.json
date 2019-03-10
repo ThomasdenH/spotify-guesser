@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "typeRoots": [],
+    "types": ["spotify-web-playback-sdk"],
+    "baseUrl": ".",
+    "target": "es2018",
+    "allowJs": false,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "esModuleInterop": true,
+    "jsx": "react",
+    "module": "es6",
+    "moduleResolution": "node"
+  }
+}
