@@ -57,6 +57,7 @@ export interface AnswerResult
   extends ToClientBaseMessage<ToClientMessageType.AnswerResult> {
   answered: number;
   correctAnswer: number;
+  scoreIncrement: number;
 }
 
 export type ToClientMessage = NotifyGameStarted | SendQuestion | AnswerResult;

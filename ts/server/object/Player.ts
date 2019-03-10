@@ -11,4 +11,9 @@ export default interface Player {
   name: string;
   connection: Peer.DataConnection;
   key: number;
+  score: number;
+  lastAnswer?: {
+    scoreIncrement: number;
+    isCorrect: boolean;
+  };
 }

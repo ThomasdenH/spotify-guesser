@@ -14,7 +14,7 @@ import {
   AnswerResult
 } from "../communication/communication";
 import { Track } from "./object/Track";
-import { Typography } from "@material-ui/core";
+import { Typography, Grid } from "@material-ui/core";
 import TrackPlayer from "./TrackPlayer";
 import "babel-polyfill";
 import SpotifyPlayer from "./player/SpotifyPlayer";
@@ -24,6 +24,7 @@ import {
   getSongQuizQuestion
 } from "./object/QuizQuestion";
 import { DeepReadonly } from "ts/util";
+import PlayerInfo from "./PlayerInfo";
 
 export interface Props {
   loginState: Readonly<LoginSuccess>;
@@ -61,6 +62,7 @@ interface GameState {
   trackList: ReadonlyArray<number>;
   currentTrack?: Readonly<Track>;
   question?: DeepReadonly<QuizQuestionWithAnswer>;
+  questionSentAt?: Date;
 }
 
 type State = ChoosePlaylistState | PlayerJoinState | GameStartedState;
@@ -100,10 +102,17 @@ export default class Server extends React.Component<Props, State> {
         return <Typography>Loading...</Typography>;
       } else {
         return (
-          <TrackPlayer
-            track={gameState.currentTrack}
-            spotifyPlayer={this.props.spotifyPlayer}
-          />
+          <React.Fragment>
+            <Grid>
+              {this.state.players.map(player => {
+                return <PlayerInfo player={player} key={player.key} />;
+              })}
+            </Grid>
+            <TrackPlayer
+              track={gameState.currentTrack}
+              spotifyPlayer={this.props.spotifyPlayer}
+            />
+          </React.Fragment>
         );
       }
     } else {
@@ -127,7 +136,8 @@ export default class Server extends React.Component<Props, State> {
     const player: Player = {
       name: "",
       key,
-      connection
+      connection,
+      score: 0
     };
     this.setState(state => {
       if (state.type !== StateType.PlayerJoin) {
@@ -149,19 +159,10 @@ export default class Server extends React.Component<Props, State> {
               console.warn("Cannot change name when not joinging");
               return {};
             }
-            return {
-              ...state,
-              players: state.players.map(p => {
-                if (p.key === player.key) {
-                  return {
-                    ...player,
-                    name: message.name
-                  };
-                } else {
-                  return p;
-                }
-              })
-            };
+            this.updatePlayer({
+              ...player,
+              name: message.name
+            });
           });
           break;
         }
@@ -172,16 +173,39 @@ export default class Server extends React.Component<Props, State> {
         case ToServerMessageType.AnswerQuestion: {
           if (
             this.state.type !== StateType.GamePlaying ||
-            typeof this.state.gameState.question === "undefined"
+            typeof this.state.gameState.question === "undefined" ||
+            typeof this.state.gameState.questionSentAt === "undefined"
           ) {
             console.warn("Cannot answer question now");
             break;
           }
+          const questionAnsweredAt = new Date();
+          let scoreIncrement;
+          const isCorrect =
+            this.state.gameState.question.correct === message.answer;
+          if (isCorrect) {
+            // Question answered correct
+            scoreIncrement = getQuestionPoints(
+              this.state.gameState.questionSentAt,
+              questionAnsweredAt
+            );
+          } else {
+            scoreIncrement = 0;
+          }
+          this.updatePlayer({
+            ...player,
+            score: player.score + scoreIncrement,
+            lastAnswer: {
+              scoreIncrement,
+              isCorrect
+            }
+          });
           // Notify the player of the correct answer
           const answerResult: AnswerResult = {
             type: ToClientMessageType.AnswerResult,
             answered: message.answer,
-            correctAnswer: this.state.gameState.question.correct
+            correctAnswer: this.state.gameState.question.correct,
+            scoreIncrement
           };
           connection.send(answerResult);
           break;
@@ -253,17 +277,36 @@ export default class Server extends React.Component<Props, State> {
         };
         player.connection.send(sendQuestion);
       }
+      const questionSentAt = new Date();
       return {
         ...state,
         gameState: {
           ...state.gameState,
           currentTrack: trackEither.value,
-          question
+          question,
+          questionSentAt
         }
       };
     } else {
       props.reportError("Could not load track");
       return state;
     }
+  }
+
+  private updatePlayer(player: Player): void {
+    this.setState(state => {
+      if (state.type !== StateType.GamePlaying)
+        throw new Error("Players not defined");
+      return {
+        ...state,
+        players: state.players.map(p => {
+          if (p.key === player.key) {
+            return player;
+          } else {
+            return p;
+          }
+        })
+      };
+    });
   }
 }
