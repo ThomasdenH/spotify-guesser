@@ -10,7 +10,7 @@
     "lint": "prettier \"**/*.{ts,tsx}\" && eslint \"**/*.{ts,tsx}\"",
     "lint-fix": "prettier --write \"**/*.{ts,tsx}\" && eslint --fix \"**/*.{ts,tsx}\"",
     "clean": "rimraf dist .cache",
-    "deploy": "git branch -f gh-pages && git checkout gh-pages && git reset --hard origin/master && yarn clean && yarn build:deploy && cpr ./dist/ . -o && git add -A . && git commit -a -m 'gh-pages update' && git push origin gh-pages --force && git checkout master"
+    "deploy": "git branch -f gh-pages && git checkout gh-pages && git reset --hard origin/master && yarn clean && yarn build:deploy && rimraf ./!(dist) && cpr ./dist/ . -o && git add -A . && git commit -m 'gh-pages update' && git push origin gh-pages --force && git checkout master"
   },
   "dependencies": {
     "@material-ui/core": "^3.9.2",
