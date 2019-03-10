@@ -8,7 +8,14 @@
     "build": "parcel build index.html",
     "lint": "prettier \"**/*.{ts,tsx}\" && eslint \"**/*.{ts,tsx}\"",
     "lint-fix": "prettier --write \"**/*.{ts,tsx}\" && eslint --fix \"**/*.{ts,tsx}\"",
-    "deploy": "yarn build && git add dist && git commit -m \"Deploy dist\" && git subtree push --prefix dist origin gh-pages"
+    "clean": "rimraf dist .cache",
+    "deploy": "gh-pages-deploy"
+  },
+  "gh-pages-deploy": {
+    "staticpath": "dist",
+    "prep": [
+      "yarn build"
+    ]
   },
   "dependencies": {
     "@material-ui/core": "^3.9.2",
@@ -33,6 +40,7 @@
     "eslint": "^5.15.1",
     "eslint-config-prettier": "^4.1.0",
     "eslint-plugin-react": "^7.12.4",
+    "gh-pages-deploy": "^0.5.1",
     "parcel-bundler": "^1.12.0",
     "prettier": "^1.16.4",
     "typescript": "^3.3.3333"
