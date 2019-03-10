@@ -7,7 +7,8 @@
     "start": "parcel index.html",
     "build": "parcel build index.html",
     "lint": "prettier \"**/*.{ts,tsx}\" && eslint \"**/*.{ts,tsx}\"",
-    "lint-fix": "prettier --write \"**/*.{ts,tsx}\" && eslint --fix \"**/*.{ts,tsx}\""
+    "lint-fix": "prettier --write \"**/*.{ts,tsx}\" && eslint --fix \"**/*.{ts,tsx}\"",
+    "deploy": "yarn build && git add dist && git commit -m \"Deploy dist\" && git subtree push --prefix dist origin gh-pages"
   },
   "dependencies": {
     "@material-ui/core": "^3.9.2",
