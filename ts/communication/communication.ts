@@ -9,7 +9,8 @@ export const enum ToServerMessageType {
 
 export const enum ToClientMessageType {
   NotifyGameStarted,
-  SendQuestion
+  SendQuestion,
+  AnswerResult
 }
 
 interface ToServerBaseMessage<T extends ToServerMessageType> {
@@ -30,7 +31,7 @@ export interface SetName
 
 export interface AnswerQuestion
   extends ToServerBaseMessage<ToServerMessageType.AnswerQuestion> {
-  correct: boolean;
+  answer: number;
 }
 
 /**
@@ -39,7 +40,7 @@ export interface AnswerQuestion
 export interface StartGame
   extends ToServerBaseMessage<ToServerMessageType.StartGame> {}
 
-export type ToServerMessage = SetName | StartGame;
+export type ToServerMessage = SetName | StartGame | AnswerQuestion;
 
 export interface NotifyGameStarted
   extends ToClientBaseMessage<ToClientMessageType.NotifyGameStarted> {}
@@ -49,4 +50,13 @@ export interface SendQuestion
   question: DeepReadonly<QuizQuestion>;
 }
 
-export type ToClientMessage = NotifyGameStarted | SendQuestion;
+/**
+ * Send to the client to notify them of the correct answer.
+ */
+export interface AnswerResult
+  extends ToClientBaseMessage<ToClientMessageType.AnswerResult> {
+  answered: number;
+  correctAnswer: number;
+}
+
+export type ToClientMessage = NotifyGameStarted | SendQuestion | AnswerResult;

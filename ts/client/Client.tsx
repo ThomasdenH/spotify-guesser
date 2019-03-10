@@ -6,7 +6,9 @@ import {
   ToClientMessage,
   ToClientMessageType,
   ToServerMessageType,
-  SetName
+  SetName,
+  AnswerQuestion,
+  AnswerResult
 } from "../communication/communication";
 import { QuizQuestion } from "../server/object/QuizQuestion";
 import { DeepReadonly } from "../util";
@@ -22,6 +24,7 @@ interface State {
   connection?: Peer.DataConnection;
   gameStarted: boolean;
   currentQuestion?: DeepReadonly<QuizQuestion>;
+  answerResult?: DeepReadonly<AnswerResult>;
 }
 
 export default class Client extends React.Component<Props, State> {
@@ -57,27 +60,26 @@ export default class Client extends React.Component<Props, State> {
         />
       );
     } else if (!this.state.gameStarted) {
-      if (typeof this.state.currentQuestion !== "undefined") {
-        return (
-          <QuestionPanel
-            question={this.state.currentQuestion}
-            onOptionChosen={() => {}}
-          />
-        );
-      } else {
-        return (
-          <React.Fragment>
-            <Typography variant="h1">{`Welcome, ${
-              this.state.playerName
-            }!`}</Typography>
-            <Button onClick={this.onClickRequestStart(this.state.connection)}>
-              Start game
-            </Button>
-          </React.Fragment>
-        );
-      }
+      return (
+        <React.Fragment>
+          <Typography variant="h1">{`Welcome, ${
+            this.state.playerName
+          }!`}</Typography>
+          <Button onClick={this.onClickRequestStart(this.state.connection)}>
+            Start game
+          </Button>
+        </React.Fragment>
+      );
+    } else if (typeof this.state.currentQuestion !== "undefined") {
+      return (
+        <QuestionPanel
+          answerResult={this.state.answerResult}
+          question={this.state.currentQuestion}
+          onOptionChosen={answer => this.onAnswerQuestion(answer)}
+        />
+      );
     } else {
-      return <React.Fragment />;
+      return <React.Fragment>Waiting for next question</React.Fragment>;
     }
   }
 
@@ -96,13 +98,31 @@ export default class Client extends React.Component<Props, State> {
           break;
         }
         case ToClientMessageType.SendQuestion: {
+          console.log(data.question);
           this.setState({
-            currentQuestion: data.question
+            currentQuestion: data.question,
+            answerResult: undefined
+          });
+          break;
+        }
+        case ToClientMessageType.AnswerResult: {
+          this.setState({
+            answerResult: data
           });
         }
       }
     });
     this.setState({ connection });
+  }
+
+  private onAnswerQuestion(answer: number): void {
+    if (typeof this.state.connection === "undefined")
+      throw new Error("The connection is undefined");
+    const answerQuestion: AnswerQuestion = {
+      type: ToServerMessageType.AnswerQuestion,
+      answer
+    };
+    this.state.connection.send(answerQuestion);
   }
 
   private onClickRequestStart(connection: Peer.DataConnection): () => void {

@@ -9,13 +9,21 @@ import {
   ToServerMessage,
   NotifyGameStarted,
   ToClientMessageType,
-  ToServerMessageType
+  ToServerMessageType,
+  SendQuestion,
+  AnswerResult
 } from "../communication/communication";
 import { Track } from "./object/Track";
 import { Typography } from "@material-ui/core";
 import TrackPlayer from "./TrackPlayer";
 import "babel-polyfill";
 import SpotifyPlayer from "./player/SpotifyPlayer";
+import {
+  getArtistQuizQuestion,
+  QuizQuestionWithAnswer,
+  getSongQuizQuestion
+} from "./object/QuizQuestion";
+import { DeepReadonly } from "ts/util";
 
 export interface Props {
   loginState: Readonly<LoginSuccess>;
@@ -52,6 +60,7 @@ interface GameState {
   currentTrackNumber: number;
   trackList: ReadonlyArray<number>;
   currentTrack?: Readonly<Track>;
+  question?: DeepReadonly<QuizQuestionWithAnswer>;
 }
 
 type State = ChoosePlaylistState | PlayerJoinState | GameStartedState;
@@ -85,7 +94,7 @@ export default class Server extends React.Component<Props, State> {
     } else if (this.state.type === StateType.GamePlaying) {
       const gameState = this.state.gameState;
       if (typeof gameState.currentTrack === "undefined") {
-        Server.loadCurrentTrack(this.props, this.state).then(state =>
+        Server.loadCurrentQuestion(this.props, this.state).then(state =>
           this.setState(state)
         );
         return <Typography>Loading...</Typography>;
@@ -160,6 +169,23 @@ export default class Server extends React.Component<Props, State> {
           this.setState(state => Server.startGame(state));
           break;
         }
+        case ToServerMessageType.AnswerQuestion: {
+          if (
+            this.state.type !== StateType.GamePlaying ||
+            typeof this.state.gameState.question === "undefined"
+          ) {
+            console.warn("Cannot answer question now");
+            break;
+          }
+          // Notify the player of the correct answer
+          const answerResult: AnswerResult = {
+            type: ToClientMessageType.AnswerResult,
+            answered: message.answer,
+            correctAnswer: this.state.gameState.question.correct
+          };
+          connection.send(answerResult);
+          break;
+        }
       }
     });
   }
@@ -201,7 +227,7 @@ export default class Server extends React.Component<Props, State> {
     return taken;
   }
 
-  private static async loadCurrentTrack(
+  private static async loadCurrentQuestion(
     props: Readonly<Props>,
     state: Readonly<GameStartedState>
   ): Promise<Readonly<State>> {
@@ -211,11 +237,28 @@ export default class Server extends React.Component<Props, State> {
       state.gameState.trackList[state.gameState.currentTrackNumber]
     );
     if (trackEither.isRight()) {
+      const random = Math.random();
+      const question =
+        random < 0.7
+          ? await getSongQuizQuestion(props.loginState, trackEither.value)
+          : await getArtistQuizQuestion(props.loginState, trackEither.value);
+      if (typeof question === "undefined") {
+        props.reportError("Could not generate question");
+        return state;
+      }
+      for (const player of state.players) {
+        const sendQuestion: SendQuestion = {
+          type: ToClientMessageType.SendQuestion,
+          question
+        };
+        player.connection.send(sendQuestion);
+      }
       return {
         ...state,
         gameState: {
           ...state.gameState,
-          currentTrack: trackEither.value
+          currentTrack: trackEither.value,
+          question
         }
       };
     } else {

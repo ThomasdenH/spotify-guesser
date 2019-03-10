@@ -2,9 +2,9 @@ import * as React from "React";
 import Client from "./client/Client";
 import Server from "./server/Server";
 import * as iots from "io-ts";
-import Button from "@material-ui/core/Button";
 import { Typography } from "@material-ui/core";
 import SpotifyPlayer from "./server/player/SpotifyPlayer";
+import ChooseAppMode from "./ChooseAppMode";
 
 const CLIENT_ID = "bc5cf5e5acb5401d978dfc4a046ecb40";
 const SPOTIFY_SCOPES = [
@@ -86,12 +86,15 @@ export default class Game extends React.Component<{}, State> {
         );
       case AppMode.Undecided:
         return (
-          <React.Fragment>
-            <Button onClick={() => this.login()}>{"Server"}</Button>
-            <Button onClick={() => this.setState({ mode: AppMode.Client })}>
-              {"Client"}
-            </Button>
-          </React.Fragment>
+          <ChooseAppMode
+            appModeChosen={appMode => {
+              if (appMode === "client") {
+                this.setState({ mode: AppMode.Client });
+              } else {
+                this.login();
+              }
+            }}
+          />
         );
       case AppMode.Error:
         return (
