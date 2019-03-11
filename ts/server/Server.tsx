@@ -128,6 +128,7 @@ export default class Server extends React.Component<
             <TrackPlayer
               track={gameState.currentTrack}
               spotifyPlayer={this.props.spotifyPlayer}
+              showInfo={Server.allPlayersAnswered(this.state)}
             />
           </React.Fragment>
         );
