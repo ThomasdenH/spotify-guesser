@@ -1,6 +1,6 @@
 import React from "react";
 import Player from "./object/Player";
-import { Typography } from "@material-ui/core";
+import Typography from '@material-ui/core/Typography';
 
 export interface Props {
   player: Player;

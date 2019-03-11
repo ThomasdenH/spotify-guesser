@@ -7,7 +7,8 @@ import {
 } from "./object/Playlist";
 import PlaylistDisplay from "./PlaylistDisplay";
 import "babel-polyfill";
-import { Typography, Grid } from "@material-ui/core";
+import Typography from '@material-ui/core/Typography';
+import Grid from '@material-ui/core/Grid';
 
 export interface Props {
   loginState: Readonly<LoginSuccess>;
