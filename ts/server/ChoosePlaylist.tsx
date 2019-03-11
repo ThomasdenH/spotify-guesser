@@ -29,14 +29,15 @@ export default class ChoosePlaylist extends React.Component<Props, State> {
     if (typeof this.state.playlists !== "undefined") {
       return (
         <React.Fragment>
-          <Typography variant="h2">{"Choose a playlist"}</Typography>
-          <Grid spacing={8} xs={3} sm={6}>
+          <Typography variant="h2" style={{marginBottom: 16}}>{"Choose a playlist"}</Typography>
+          <Grid container spacing={16} justify="center">
             {this.state.playlists.map(playlist => (
-              <PlaylistDisplay
-                key={playlist.id}
-                playlist={playlist}
-                onClick={() => this.props.onPlaylistChosen(playlist)}
-              />
+              <Grid item xs={6} sm={3} key={playlist.id}>
+                <PlaylistDisplay
+                  playlist={playlist}
+                  onClick={() => this.props.onPlaylistChosen(playlist)}
+                />
+              </Grid>
             ))}
           </Grid>
         </React.Fragment>
