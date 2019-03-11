@@ -1,11 +1,13 @@
 import { LoginSuccess } from "ts/App";
 import { Track } from "../object/Track";
 import "babel-polyfill";
+import { DeepReadonly } from "ts/util";
 
 export default class SpotifyPlayer {
   private readonly loginSuccess: Readonly<LoginSuccess>;
   private deviceId?: string;
   private player?: Spotify.SpotifyPlayer;
+  private currentlyPlaying?: DeepReadonly<Track>;
   public constructor(loginSuccess: LoginSuccess) {
     this.loginSuccess = loginSuccess;
     window.onSpotifyWebPlaybackSDKReady = () => {
@@ -52,6 +54,9 @@ export default class SpotifyPlayer {
   public async play(track: Track): Promise<void> {
     if (typeof this.deviceId === "undefined")
       throw new Error("Player not initialized");
+    if (typeof this.currentlyPlaying !== 'undefined' && this.currentlyPlaying.id === track.id)
+      return;
+    this.currentlyPlaying = track;
     await fetch(
       `https://api.spotify.com/v1/me/player/play?device_id=${this.deviceId}`,
       {

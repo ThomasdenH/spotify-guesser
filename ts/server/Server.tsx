@@ -11,7 +11,9 @@ import {
   ToClientMessageType,
   ToServerMessageType,
   SendQuestion,
-  AnswerResult
+  AnswerResult,
+  AnswerQuestion,
+  SetName
 } from "../communication/communication";
 import { Track } from "./object/Track";
 import { Typography, Grid } from "@material-ui/core";
@@ -23,8 +25,9 @@ import {
   QuizQuestionWithAnswer,
   getSongQuizQuestion
 } from "./object/QuizQuestion";
-import { DeepReadonly } from "ts/util";
+import { DeepReadonly } from "../util";
 import PlayerInfo from "./PlayerInfo";
+import { getQuestionPoints } from "../shared/questionUtil";
 
 export interface Props {
   loginState: Readonly<LoginSuccess>;
@@ -133,85 +136,90 @@ export default class Server extends React.Component<Props, State> {
    */
   private onNewPlayer(connection: Peer.DataConnection): void {
     const key = nextPlayerId();
-    const player: Player = {
-      name: "",
-      key,
-      connection,
-      score: 0
-    };
-    this.setState(state => {
-      if (state.type !== StateType.PlayerJoin) {
-        console.warn("Players cannot currently join.");
-        connection.close();
-        return {};
-      } else {
-        return {
-          ...state,
-          players: [...state.players, player]
-        };
-      }
-    });
+    this.setState(state => Server.addPlayer(state, key, connection));
     connection.on("data", (message: ToServerMessage) => {
       switch (message.type) {
-        case ToServerMessageType.SetName: {
-          this.setState(state => {
-            if (state.type !== StateType.PlayerJoin) {
-              console.warn("Cannot change name when not joinging");
-              return {};
-            }
-            this.updatePlayer({
-              ...player,
-              name: message.name
-            });
-          });
-          break;
-        }
-        case ToServerMessageType.StartGame: {
-          this.setState(state => Server.startGame(state));
-          break;
-        }
-        case ToServerMessageType.AnswerQuestion: {
-          if (
-            this.state.type !== StateType.GamePlaying ||
-            typeof this.state.gameState.question === "undefined" ||
-            typeof this.state.gameState.questionSentAt === "undefined"
-          ) {
-            console.warn("Cannot answer question now");
-            break;
-          }
-          const questionAnsweredAt = new Date();
-          let scoreIncrement;
-          const isCorrect =
-            this.state.gameState.question.correct === message.answer;
-          if (isCorrect) {
-            // Question answered correct
-            scoreIncrement = getQuestionPoints(
-              this.state.gameState.questionSentAt,
-              questionAnsweredAt
-            );
-          } else {
-            scoreIncrement = 0;
-          }
-          this.updatePlayer({
-            ...player,
-            score: player.score + scoreIncrement,
-            lastAnswer: {
-              scoreIncrement,
-              isCorrect
-            }
-          });
-          // Notify the player of the correct answer
-          const answerResult: AnswerResult = {
-            type: ToClientMessageType.AnswerResult,
-            answered: message.answer,
-            correctAnswer: this.state.gameState.question.correct,
-            scoreIncrement
-          };
-          connection.send(answerResult);
-          break;
-        }
+        case ToServerMessageType.SetName:
+          return this.setState(state => Server.setName(state, key, message));
+        case ToServerMessageType.StartGame:
+          return this.setState(state => Server.startGame(state));
+        case ToServerMessageType.AnswerQuestion:
+          return this.setState(state => Server.answerQuestion(state, key, message, connection));
       }
     });
+  }
+
+  private static addPlayer(state: DeepReadonly<State>, key: number, connection: Peer.DataConnection): DeepReadonly<State> {
+    if (state.type !== StateType.PlayerJoin) {
+      console.warn("Players cannot currently join.");
+      connection.close();
+      return state;
+    } else {
+      return {
+        ...state,
+        players: [...state.players, {
+          name: "",
+          key,
+          connection,
+          score: 0
+        }]
+      };
+    }
+  }
+
+  private static setName(state: DeepReadonly<State>, playerKey: number, message: SetName): DeepReadonly<State> {
+    if (state.type !== StateType.PlayerJoin) {
+      console.warn("Cannot change name when not joining");
+      return state;
+    }
+    return Server.updatePlayer(state, playerKey, player => ({
+      ...player,
+      name: message.name
+    }));
+  }
+
+  /**
+   * Called when a player answers a question.
+   */
+  private static answerQuestion(state: DeepReadonly<State>, playerKey: number, message: AnswerQuestion, connection: Peer.DataConnection): DeepReadonly<State> {
+    if (
+      state.type !== StateType.GamePlaying ||
+      typeof state.gameState.question === "undefined" ||
+      typeof state.gameState.questionSentAt === "undefined"
+    ) {
+      console.warn("Cannot answer question now");
+      return state;
+    }
+    const questionAnsweredAt = new Date();
+    let scoreIncrement: number;
+    const isCorrect =
+      state.gameState.question.correct === message.answer;
+    if (isCorrect) {
+      // Question answered correct
+      scoreIncrement = getQuestionPoints(
+        state.gameState.questionSentAt,
+        questionAnsweredAt
+      );
+    } else {
+      scoreIncrement = 0;
+    }
+    state = Server.updatePlayer(state, playerKey, player => ({
+      ...player,
+      score: player.score + scoreIncrement,
+      lastAnswer: {
+        scoreIncrement,
+        isCorrect
+      }
+    }));
+    // Notify the player of the correct answer
+    const answerResult: AnswerResult = {
+      type: ToClientMessageType.AnswerResult,
+      answered: message.answer,
+      correctAnswer: state.gameState.question.correct,
+      scoreIncrement
+    };
+    connection.send(answerResult);
+    return state;
   }
 
   private static startGame(state: Readonly<State>): Readonly<State> {
@@ -293,20 +301,24 @@ export default class Server extends React.Component<Props, State> {
     }
   }
 
-  private updatePlayer(player: Player): void {
-    this.setState(state => {
-      if (state.type !== StateType.GamePlaying)
-        throw new Error("Players not defined");
-      return {
-        ...state,
-        players: state.players.map(p => {
-          if (p.key === player.key) {
-            return player;
-          } else {
-            return p;
-          }
-        })
-      };
-    });
+  private static updatePlayer(state: DeepReadonly<State>, key: number, playerUpdate: (player: DeepReadonly<Player>) => DeepReadonly<Player>): DeepReadonly<State> {
+    if (state.type !== StateType.PlayerJoin && state.type !== StateType.GamePlaying)
+      throw new Error("Players not defined");
+    return {
+      ...state,
+      players: state.players.map(p => {
+        if (p.key === key) {
+          return playerUpdate(p);
+        } else {
+          return p;
+        }
+      })
+    };
+  }
+
+  private static allPlayersAnswered(state: DeepReadonly<State>): boolean {
+    if (state.type !== StateType.GamePlaying)
+      throw new Error('Function should only be called while playing');
+    return state.players.every(player => typeof player.lastAnswer !== 'undefined');
   }
 }

@@ -1,6 +1,7 @@
 import React from "react";
 import { Track } from "./object/Track";
 import SpotifyPlayer from "./player/SpotifyPlayer";
+import { Typography } from "@material-ui/core";
 
 export interface Props {
   track: Track;
@@ -13,7 +14,8 @@ export default class TrackPlayer extends React.Component<Props, {}> {
     spotifyPlayer.play(track);
     return (
       <React.Fragment>
-        <p>{this.props.track.name}</p>
+        <Typography variant="body1">{this.props.track.name}</Typography>
+        <Typography variant="body1">{this.props.track.artists.join(', ')}</Typography>
       </React.Fragment>
     );
   }

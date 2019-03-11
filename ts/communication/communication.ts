@@ -4,13 +4,15 @@ import { QuizQuestion } from "../server/object/QuizQuestion";
 export const enum ToServerMessageType {
   SetName,
   StartGame,
-  AnswerQuestion
+  AnswerQuestion,
+  NextQuestion
 }
 
 export const enum ToClientMessageType {
   NotifyGameStarted,
   SendQuestion,
-  AnswerResult
+  AnswerResult,
+  AllAnswersGiven
 }
 
 interface ToServerBaseMessage<T extends ToServerMessageType> {
@@ -35,15 +37,23 @@ export interface AnswerQuestion
 }
 
 /**
+ * Sent to the server to request the next question be shown.
+ */
+export interface NextQuestion
+  extends ToServerBaseMessage<ToServerMessageType.NextQuestion> {
+
+}
+
+/**
  * Sent by a player when they want to start a game.
  */
 export interface StartGame
-  extends ToServerBaseMessage<ToServerMessageType.StartGame> {}
+  extends ToServerBaseMessage<ToServerMessageType.StartGame> { }
 
 export type ToServerMessage = SetName | StartGame | AnswerQuestion;
 
 export interface NotifyGameStarted
-  extends ToClientBaseMessage<ToClientMessageType.NotifyGameStarted> {}
+  extends ToClientBaseMessage<ToClientMessageType.NotifyGameStarted> { }
 
 export interface SendQuestion
   extends ToClientBaseMessage<ToClientMessageType.SendQuestion> {
@@ -58,6 +68,13 @@ export interface AnswerResult
   answered: number;
   correctAnswer: number;
   scoreIncrement: number;
+}
+
+/**
+ * Sent to the client to notify them that all answers are in. They could request the next song.
+ */
+export interface AllAnswersGiven extends ToClientBaseMessage<ToClientMessageType.AllAnswersGiven> {
+
 }
 
 export type ToClientMessage = NotifyGameStarted | SendQuestion | AnswerResult;

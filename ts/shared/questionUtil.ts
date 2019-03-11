@@ -1,7 +1,7 @@
 const MAX_TIME = 30;
 const SCORE_PER_QUESTION = 100;
 
-function getQuestionPoints(start: Date, at: Date): number {
+export function getQuestionPoints(start: Date, at: Date): number {
   const seconds = (at.getTime() - start.getTime()) / 1000;
   const secondsLeft = MAX_TIME - seconds;
   if (secondsLeft <= 0) return 0;
