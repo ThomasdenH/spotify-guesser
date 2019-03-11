@@ -2,7 +2,7 @@ import React from "react";
 import { Track } from "./object/Track";
 import SpotifyPlayer from "./player/SpotifyPlayer";
 import { DeepReadonly } from "ts/util";
-import { Typography } from "@material-ui/core";
+import Typography from "@material-ui/core/Typography";
 
 export interface Props {
   track: Track;

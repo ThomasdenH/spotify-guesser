@@ -4,6 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
+    "typecheck": "tsc --noEmit",
     "start": "parcel index.html",
     "build": "parcel build index.html",
     "build:deploy": "parcel build index.html --public-url /spotify-guesser/ --no-source-maps",

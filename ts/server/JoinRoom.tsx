@@ -36,14 +36,16 @@ export default class JoinRoom extends React.Component<Props, State> {
           </Typography>
           <Typography variant="h2">{"Current players"}</Typography>
           <List>
-            {this.props.players.map(player => <ListItem key={player.key}>{player.name}</ListItem>)}
+            {this.props.players.map(player => (
+              <ListItem key={player.key}>{player.name}</ListItem>
+            ))}
           </List>
         </React.Fragment>
       );
     }
   }
 
-  private onConnection(connection: Peer.DataConnection) {
+  private onConnection(connection: Peer.DataConnection): void {
     this.props.addPlayer(connection);
   }
 }

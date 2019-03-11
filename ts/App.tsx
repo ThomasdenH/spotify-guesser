@@ -20,7 +20,9 @@ export const loginError = iots.type({
 export interface LoginError extends iots.TypeOf<typeof loginError> {}
 
 export const loginSuccess = iots.type({
+  // eslint-disable-next-line @typescript-eslint/camelcase
   access_token: iots.string,
+  // eslint-disable-next-line @typescript-eslint/camelcase
   token_type: iots.literal("Bearer")
 });
 export interface LoginSuccess extends iots.TypeOf<typeof loginSuccess> {}

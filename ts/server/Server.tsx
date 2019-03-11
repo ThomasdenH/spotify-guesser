@@ -376,7 +376,7 @@ export default class Server extends React.Component<
       return {
         type: StateType.GameOver,
         players: state.players
-      }
+      };
     } else {
       return {
         ...state,

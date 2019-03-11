@@ -79,7 +79,8 @@ export interface AnswerResult
 export interface AllAnswersGiven
   extends ToClientBaseMessage<ToClientMessageType.AllAnswersGiven> {}
 
-export interface GameEnded extends ToClientBaseMessage<ToClientMessageType.GameEnded> {}
+export interface GameEnded
+  extends ToClientBaseMessage<ToClientMessageType.GameEnded> {}
 
 export type ToClientMessage =
   | NotifyGameStarted

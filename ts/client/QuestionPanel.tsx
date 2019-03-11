@@ -1,14 +1,12 @@
 import React from "react";
 import { QuizQuestion } from "../server/object/QuizQuestion";
-import {
-  Typography,
-  Button,
-  createMuiTheme,
-  MuiThemeProvider
-} from "@material-ui/core";
+import Typography from "@material-ui/core/Typography";
+import Button from "@material-ui/core/Button";
 import { DeepReadonly } from "../util";
 import { AnswerResult } from "../communication/communication";
 import { green, blue, red } from "@material-ui/core/colors";
+import MuiThemeProvider from "@material-ui/core/styles/MuiThemeProvider";
+import { createMuiTheme } from "@material-ui/core/styles";
 
 export interface Props {
   answerResult: DeepReadonly<AnswerResult | undefined>;

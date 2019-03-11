@@ -1,7 +1,9 @@
 import React from "react";
 import Peer from "peerjs";
 import ConnectToServer from "./ConnectToServer";
-import { Typography, TextField, Button } from "@material-ui/core";
+import Typography from "@material-ui/core/Typography";
+import TextField from "@material-ui/core/TextField";
+import Button from "@material-ui/core/Button";
 import {
   ToClientMessage,
   ToClientMessageType,
