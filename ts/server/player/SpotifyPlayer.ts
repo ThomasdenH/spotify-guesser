@@ -1,7 +1,7 @@
-import { LoginSuccess } from "ts/App";
+import { LoginSuccess } from "../../App";
 import { Track } from "../object/Track";
 import "babel-polyfill";
-import { DeepReadonly } from "ts/util";
+import { DeepReadonly } from "../../util";
 
 export default class SpotifyPlayer {
   private readonly loginSuccess: Readonly<LoginSuccess>;
@@ -37,7 +37,6 @@ export default class SpotifyPlayer {
 
       // Ready
       this.player.addListener("ready", ({ device_id }) => {
-        console.log(device_id);
         this.deviceId = device_id;
       });
 
@@ -51,10 +50,13 @@ export default class SpotifyPlayer {
     };
   }
 
-  public async play(track: Track): Promise<void> {
+  public async play(track: DeepReadonly<Track>): Promise<void> {
     if (typeof this.deviceId === "undefined")
       throw new Error("Player not initialized");
-    if (typeof this.currentlyPlaying !== 'undefined' && this.currentlyPlaying.id === track.id)
+    if (
+      typeof this.currentlyPlaying !== "undefined" &&
+      this.currentlyPlaying.id === track.id
+    )
       return;
     this.currentlyPlaying = track;
     await fetch(

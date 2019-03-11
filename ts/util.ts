@@ -1,4 +1,4 @@
-export type DeepReadonly<T> = T extends (infer R)[]
+export type DeepReadonly<T> = T extends ReadonlyArray<infer R>
   ? DeepReadonlyArray<R>
   : T extends Function
   ? T

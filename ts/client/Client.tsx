@@ -8,7 +8,9 @@ import {
   ToServerMessageType,
   SetName,
   AnswerQuestion,
-  AnswerResult
+  AnswerResult,
+  SendQuestion,
+  NextQuestion
 } from "../communication/communication";
 import { QuizQuestion } from "../server/object/QuizQuestion";
 import { DeepReadonly } from "../util";
@@ -25,13 +27,19 @@ interface State {
   gameStarted: boolean;
   currentQuestion?: DeepReadonly<QuizQuestion>;
   answerResult?: DeepReadonly<AnswerResult>;
+  /** If true, the button to show the next question should be shown. */
+  showNextQuestion: boolean;
 }
 
-export default class Client extends React.Component<Props, State> {
+export default class Client extends React.Component<
+  Props,
+  DeepReadonly<State>
+> {
   public state: State = {
     playerName: "",
     playerNameSubmitted: false,
-    gameStarted: false
+    gameStarted: false,
+    showNextQuestion: false
   };
 
   public render(): JSX.Element {
@@ -71,12 +79,24 @@ export default class Client extends React.Component<Props, State> {
         </React.Fragment>
       );
     } else if (typeof this.state.currentQuestion !== "undefined") {
+      const { connection } = this.state;
       return (
-        <QuestionPanel
-          answerResult={this.state.answerResult}
-          question={this.state.currentQuestion}
-          onOptionChosen={answer => this.onAnswerQuestion(answer)}
-        />
+        <React.Fragment>
+          <QuestionPanel
+            answerResult={this.state.answerResult}
+            question={this.state.currentQuestion}
+            onOptionChosen={answer => this.onAnswerQuestion(answer)}
+          />
+          {this.state.showNextQuestion && (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => this.onClickNextQuestion(connection)}
+            >
+              Next question
+            </Button>
+          )}
+        </React.Fragment>
       );
     } else {
       return <React.Fragment>Waiting for next question</React.Fragment>;
@@ -91,28 +111,43 @@ export default class Client extends React.Component<Props, State> {
     connection.send(setPlayerName);
     connection.on("data", (data: ToClientMessage) => {
       switch (data.type) {
-        case ToClientMessageType.NotifyGameStarted: {
-          this.setState({
-            gameStarted: true
-          });
-          break;
-        }
-        case ToClientMessageType.SendQuestion: {
-          console.log(data.question);
-          this.setState({
-            currentQuestion: data.question,
-            answerResult: undefined
-          });
-          break;
-        }
-        case ToClientMessageType.AnswerResult: {
-          this.setState({
-            answerResult: data
-          });
-        }
+        case ToClientMessageType.NotifyGameStarted:
+          return this.setState(state => Client.onGameStarted(state));
+        case ToClientMessageType.SendQuestion:
+          return this.setState(state => Client.onSendQuestion(state, data));
+        case ToClientMessageType.AnswerResult:
+          return this.setState({ answerResult: data });
+        case ToClientMessageType.AllAnswersGiven:
+          return this.setState({ showNextQuestion: true });
+        case ToClientMessageType.GameEnded:
+          return this.setState({ gameStarted: false });
       }
     });
     this.setState({ connection });
+  }
+
+  private static onGameStarted(
+    state: DeepReadonly<State>
+  ): DeepReadonly<State> {
+    return {
+      ...state,
+      currentQuestion: undefined,
+      answerResult: undefined,
+      showNextQuestion: false,
+      gameStarted: true
+    };
+  }
+
+  private static onSendQuestion(
+    state: DeepReadonly<State>,
+    message: DeepReadonly<SendQuestion>
+  ): DeepReadonly<State> {
+    return {
+      ...state,
+      currentQuestion: message.question,
+      answerResult: undefined,
+      showNextQuestion: false
+    };
   }
 
   private onAnswerQuestion(answer: number): void {
@@ -132,5 +167,12 @@ export default class Client extends React.Component<Props, State> {
       };
       connection.send(message);
     };
+  }
+
+  private onClickNextQuestion(connection: Peer.DataConnection): void {
+    const showNextQuestion: NextQuestion = {
+      type: ToServerMessageType.NextQuestion
+    };
+    connection.send(showNextQuestion);
   }
 }

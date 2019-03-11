@@ -4,6 +4,7 @@ import { pagingObject } from "./PagingObject";
 import "babel-polyfill";
 import { LoginSuccess } from "../../App";
 import { Track, track } from "./Track";
+import { DeepReadonly } from "ts/util";
 
 export const playlist = iots.type({
   images: iots.array(image),
@@ -22,6 +23,11 @@ const playlistTrack = iots.type({
 
 export const playlistsResponse = pagingObject(playlist);
 
+export const featuredPlaylistsResponse = iots.type({
+  message: iots.string,
+  playlists: pagingObject(playlist)
+});
+
 const CURRENT_USER_PLAYLISTS = "https://api.spotify.com/v1/me/playlists";
 export async function getPlaylistsOfUser(
   loginSuccess: LoginSuccess
@@ -34,9 +40,22 @@ export async function getPlaylistsOfUser(
   return playlistsResponse.decode(await response.json());
 }
 
+const ALL_FEATURED_PLAYLISTS =
+  "https://api.spotify.com/v1/browse/featured-playlists";
+export async function getAllFeaturedPlaylists(
+  loginSuccess: LoginSuccess
+): Promise<iots.Validation<iots.TypeOf<typeof featuredPlaylistsResponse>>> {
+  const response = await fetch(ALL_FEATURED_PLAYLISTS, {
+    headers: {
+      Authorization: `Bearer ${loginSuccess.access_token}`
+    }
+  });
+  return featuredPlaylistsResponse.decode(await response.json());
+}
+
 export async function getTrackFromPlaylist(
   loginSuccess: LoginSuccess,
-  playlist: Playlist,
+  playlist: DeepReadonly<Playlist>,
   trackIndex: number
 ): Promise<iots.Validation<Track>> {
   const response = await fetch(

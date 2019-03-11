@@ -1,7 +1,12 @@
+import { DeepReadonly } from "ts/util";
+
 const MAX_TIME = 30;
 const SCORE_PER_QUESTION = 100;
 
-export function getQuestionPoints(start: Date, at: Date): number {
+export function getQuestionPoints(
+  start: DeepReadonly<Date>,
+  at: DeepReadonly<Date>
+): number {
   const seconds = (at.getTime() - start.getTime()) / 1000;
   const secondsLeft = MAX_TIME - seconds;
   if (secondsLeft <= 0) return 0;

@@ -1,6 +1,10 @@
 import React from "react";
 import { LoginSuccess } from "../App";
-import { Playlist, getPlaylistsOfUser } from "./object/Playlist";
+import {
+  Playlist,
+  getPlaylistsOfUser,
+  getAllFeaturedPlaylists
+} from "./object/Playlist";
 import PlaylistDisplay from "./PlaylistDisplay";
 import "babel-polyfill";
 import { Typography, Grid } from "@material-ui/core";
@@ -45,8 +49,14 @@ export default class ChoosePlaylist extends React.Component<Props, State> {
 
   public async loadPlayLists(loginSuccess: LoginSuccess): Promise<void> {
     const playlistsEither = await getPlaylistsOfUser(loginSuccess);
-    if (playlistsEither.isRight()) {
-      this.setState({ playlists: playlistsEither.value.items });
+    const featuredPlaylistsEither = await getAllFeaturedPlaylists(loginSuccess);
+    if (playlistsEither.isRight() && featuredPlaylistsEither.isRight()) {
+      this.setState({
+        playlists: [
+          ...playlistsEither.value.items,
+          ...featuredPlaylistsEither.value.playlists.items
+        ]
+      });
     } else {
       this.props.reportError("Could not decode playlists");
     }

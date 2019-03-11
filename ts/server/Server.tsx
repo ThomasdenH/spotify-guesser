@@ -13,7 +13,8 @@ import {
   SendQuestion,
   AnswerResult,
   AnswerQuestion,
-  SetName
+  SetName,
+  AllAnswersGiven
 } from "../communication/communication";
 import { Track } from "./object/Track";
 import { Typography, Grid } from "@material-ui/core";
@@ -38,7 +39,8 @@ export interface Props {
 const enum StateType {
   ChoosePlaylist,
   PlayerJoin,
-  GamePlaying
+  GamePlaying,
+  GameOver
 }
 
 interface ChoosePlaylistState {
@@ -50,14 +52,14 @@ interface ChoosePlaylistState {
 interface PlayerJoinState {
   type: StateType.PlayerJoin;
   playlist: Readonly<Playlist>;
-  players: ReadonlyArray<Readonly<Player>>;
+  players: DeepReadonly<Player[]>;
 }
 
 interface GameStartedState {
   type: StateType.GamePlaying;
   gameState: Readonly<GameState>;
   playlist: Readonly<Playlist>;
-  players: ReadonlyArray<Readonly<Player>>;
+  players: DeepReadonly<Player[]>;
 }
 
 interface GameState {
@@ -68,11 +70,23 @@ interface GameState {
   questionSentAt?: Date;
 }
 
-type State = ChoosePlaylistState | PlayerJoinState | GameStartedState;
+interface GameOverState {
+  type: StateType.GameOver;
+  players: DeepReadonly<Player[]>;
+}
+
+type State =
+  | ChoosePlaylistState
+  | PlayerJoinState
+  | GameStartedState
+  | GameOverState;
 
 const AMOUNT_OF_TRACKS = 10;
 
-export default class Server extends React.Component<Props, State> {
+export default class Server extends React.Component<
+  DeepReadonly<Props>,
+  DeepReadonly<State>
+> {
   public state: State = {
     type: StateType.ChoosePlaylist
   };
@@ -85,7 +99,7 @@ export default class Server extends React.Component<Props, State> {
           loginState={this.props.loginState}
           reportError={this.props.reportError}
           onPlaylistChosen={(playlist: Playlist) =>
-            this.setState(this.onPlaylistChosen(playlist))
+            this.setState(Server.onPlaylistChosen(playlist))
           }
         />
       );
@@ -107,9 +121,9 @@ export default class Server extends React.Component<Props, State> {
         return (
           <React.Fragment>
             <Grid>
-              {this.state.players.map(player => {
-                return <PlayerInfo player={player} key={player.key} />;
-              })}
+              {this.state.players.map(player => (
+                <PlayerInfo player={player} key={player.key} />
+              ))}
             </Grid>
             <TrackPlayer
               track={gameState.currentTrack}
@@ -119,11 +133,20 @@ export default class Server extends React.Component<Props, State> {
         );
       }
     } else {
-      return <p>Game over!</p>;
+      return (
+        <React.Fragment>
+          <Typography variant="h1">Game over!</Typography>
+          <Grid>
+            {this.state.players.map(player => (
+              <PlayerInfo player={player} key={player.key} />
+            ))}
+          </Grid>
+        </React.Fragment>
+      );
     }
   }
 
-  private onPlaylistChosen(playlist: Playlist): PlayerJoinState {
+  private static onPlaylistChosen(playlist: Playlist): PlayerJoinState {
     return {
       type: StateType.PlayerJoin,
       playlist,
@@ -144,12 +167,20 @@ export default class Server extends React.Component<Props, State> {
         case ToServerMessageType.StartGame:
           return this.setState(state => Server.startGame(state));
         case ToServerMessageType.AnswerQuestion:
-          return this.setState(state => Server.answerQuestion(state, key, message, connection));
+          return this.setState(state =>
+            Server.answerQuestion(state, key, message, connection)
+          );
+        case ToServerMessageType.NextQuestion:
+          return this.setState(state => Server.nextQuestion(state));
       }
     });
   }
 
-  private static addPlayer(state: DeepReadonly<State>, key: number, connection: Peer.DataConnection): DeepReadonly<State> {
+  private static addPlayer(
+    state: DeepReadonly<State>,
+    key: number,
+    connection: Peer.DataConnection
+  ): DeepReadonly<State> {
     if (state.type !== StateType.PlayerJoin) {
       console.warn("Players cannot currently join.");
       connection.close();
@@ -157,19 +188,26 @@ export default class Server extends React.Component<Props, State> {
     } else {
       return {
         ...state,
-        players: [...state.players, {
-          name: "",
-          key,
-          connection,
-          score: 0
-        }]
+        players: [
+          ...state.players,
+          {
+            name: "",
+            key,
+            connection,
+            score: 0
+          }
+        ]
       };
     }
   }
 
-  private static setName(state: DeepReadonly<State>, playerKey: number, message: SetName): DeepReadonly<State> {
+  private static setName(
+    state: DeepReadonly<State>,
+    playerKey: number,
+    message: SetName
+  ): DeepReadonly<State> {
     if (state.type !== StateType.PlayerJoin) {
-      console.warn("Cannot change name when not joining");
+      console.warn("Can only change name while joining");
       return state;
     }
     return Server.updatePlayer(state, playerKey, player => ({
@@ -181,7 +219,12 @@ export default class Server extends React.Component<Props, State> {
   /**
    * Called when a player answers a question.
    */
-  private static answerQuestion(state: DeepReadonly<State>, playerKey: number, message: AnswerQuestion, connection: Peer.DataConnection): DeepReadonly<State> {
+  private static answerQuestion(
+    state: DeepReadonly<State>,
+    playerKey: number,
+    message: AnswerQuestion,
+    connection: Peer.DataConnection
+  ): DeepReadonly<State> {
     if (
       state.type !== StateType.GamePlaying ||
       typeof state.gameState.question === "undefined" ||
@@ -192,8 +235,7 @@ export default class Server extends React.Component<Props, State> {
     }
     const questionAnsweredAt = new Date();
     let scoreIncrement: number;
-    const isCorrect =
-      state.gameState.question.correct === message.answer;
+    const isCorrect = state.gameState.question.correct === message.answer;
     if (isCorrect) {
       // Question answered correct
       scoreIncrement = getQuestionPoints(
@@ -211,6 +253,15 @@ export default class Server extends React.Component<Props, State> {
         isCorrect
       }
     }));
+
+    if (
+      state.type !== StateType.GamePlaying ||
+      typeof state.gameState.question === "undefined"
+    ) {
+      console.warn("Not playing in answerQuestion");
+      return state;
+    }
+
     // Notify the player of the correct answer
     const answerResult: AnswerResult = {
       type: ToClientMessageType.AnswerResult,
@@ -219,10 +270,20 @@ export default class Server extends React.Component<Props, State> {
       scoreIncrement
     };
     connection.send(answerResult);
+
+    if (this.allPlayersAnswered(state)) {
+      for (const player of state.players) {
+        const allPlayersAnswered: AllAnswersGiven = {
+          type: ToClientMessageType.AllAnswersGiven
+        };
+        player.connection.send(allPlayersAnswered);
+      }
+    }
+
     return state;
   }
 
-  private static startGame(state: Readonly<State>): Readonly<State> {
+  private static startGame(state: DeepReadonly<State>): DeepReadonly<State> {
     if (state.type !== StateType.PlayerJoin) {
       console.warn("Can only start game from PlayerJoin");
       return state;
@@ -246,7 +307,7 @@ export default class Server extends React.Component<Props, State> {
 
   private static generateTrackList(
     amount: number,
-    playlist: Readonly<Playlist>
+    playlist: DeepReadonly<Playlist>
   ): ReadonlyArray<number> {
     const takeFrom = [];
     for (let i = 0; i < playlist.tracks.total; i++) takeFrom.push(i);
@@ -260,9 +321,9 @@ export default class Server extends React.Component<Props, State> {
   }
 
   private static async loadCurrentQuestion(
-    props: Readonly<Props>,
-    state: Readonly<GameStartedState>
-  ): Promise<Readonly<State>> {
+    props: DeepReadonly<Props>,
+    state: DeepReadonly<GameStartedState>
+  ): Promise<DeepReadonly<State>> {
     const trackEither = await getTrackFromPlaylist(
       props.loginState,
       state.playlist,
@@ -301,9 +362,44 @@ export default class Server extends React.Component<Props, State> {
     }
   }
 
-  private static updatePlayer(state: DeepReadonly<State>, key: number, playerUpdate: (player: DeepReadonly<Player>) => DeepReadonly<Player>): DeepReadonly<State> {
-    if (state.type !== StateType.PlayerJoin && state.type !== StateType.GamePlaying)
-      throw new Error("Players not defined");
+  private static nextQuestion(state: DeepReadonly<State>): DeepReadonly<State> {
+    if (
+      state.type !== StateType.GamePlaying ||
+      typeof state.gameState === "undefined"
+    ) {
+      console.warn("Cannot go to next question");
+      return state;
+    }
+
+    const currentTrackNumber = state.gameState.currentTrackNumber + 1;
+    if (currentTrackNumber >= state.gameState.trackList.length) {
+      return {
+        type: StateType.GameOver,
+        players: state.players
+      }
+    } else {
+      return {
+        ...state,
+        gameState: {
+          currentTrackNumber,
+          trackList: state.gameState.trackList
+        }
+      };
+    }
+  }
+
+  private static updatePlayer(
+    state: DeepReadonly<State>,
+    key: number,
+    playerUpdate: (player: DeepReadonly<Player>) => DeepReadonly<Player>
+  ): DeepReadonly<State> {
+    if (
+      state.type !== StateType.PlayerJoin &&
+      state.type !== StateType.GamePlaying
+    ) {
+      console.warn("Player cannot be updated in this state.");
+      return state;
+    }
     return {
       ...state,
       players: state.players.map(p => {
@@ -318,7 +414,9 @@ export default class Server extends React.Component<Props, State> {
 
   private static allPlayersAnswered(state: DeepReadonly<State>): boolean {
     if (state.type !== StateType.GamePlaying)
-      throw new Error('Function should only be called while playing');
-    return state.players.every(player => typeof player.lastAnswer !== 'undefined');
+      throw new Error("Function should only be called while playing");
+    return state.players.every(
+      player => typeof player.lastAnswer !== "undefined"
+    );
   }
 }
