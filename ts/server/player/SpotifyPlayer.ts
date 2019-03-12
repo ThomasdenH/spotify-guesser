@@ -36,8 +36,8 @@ export default class SpotifyPlayer {
       });
 
       // Ready
-      this.player.addListener("ready", ({ device_id }) => {
-        this.deviceId = device_id;
+      this.player.addListener("ready", readyProps => {
+        this.deviceId = readyProps.device_id;
       });
 
       // Not Ready
