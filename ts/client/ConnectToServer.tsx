@@ -24,14 +24,19 @@ export default class ConnectToServer extends React.Component<Props, State> {
   public render(): JSX.Element {
     return (
       <React.Fragment>
-        <Typography variant="h1">{"Enter room id:"}</Typography>
+        <Typography variant="h3" style={{ marginBottom: 16 }}>
+          {"Please enter the room ID you want to connect to:"}
+        </Typography>
         <TextField
           autoFocus={true}
           type="text"
           value={this.state.inputValue}
+          style={{ marginRight: 16 }}
           onChange={v => this.setState({ inputValue: v.currentTarget.value })}
         />
-        <Button onClick={() => this.startConnection()}>Start!</Button>
+        <Button variant="contained" onClick={() => this.startConnection()}>
+          Start!
+        </Button>
       </React.Fragment>
     );
   }

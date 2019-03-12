@@ -48,14 +48,20 @@ export default class Client extends React.Component<
     if (!this.state.playerNameSubmitted) {
       return (
         <React.Fragment>
-          <Typography variant="h1">{"Please enter your name:"}</Typography>
+          <Typography variant="h3" style={{ marginBottom: 16 }}>
+            {"Please enter your name:"}
+          </Typography>
           <TextField
             value={this.state.playerName}
+            style={{ marginRight: 16 }}
             onChange={ev =>
               this.setState({ playerName: ev.currentTarget.value })
             }
           />
-          <Button onClick={() => this.setState({ playerNameSubmitted: true })}>
+          <Button
+            variant="contained"
+            onClick={() => this.setState({ playerNameSubmitted: true })}
+          >
             {"Done"}
           </Button>
         </React.Fragment>
@@ -72,10 +78,13 @@ export default class Client extends React.Component<
     } else if (!this.state.gameStarted) {
       return (
         <React.Fragment>
-          <Typography variant="h1">{`Welcome, ${
+          <Typography variant="h3" style={{ marginBottom: 16 }}>{`Welcome, ${
             this.state.playerName
           }!`}</Typography>
-          <Button onClick={this.onClickRequestStart(this.state.connection)}>
+          <Button
+            variant="contained"
+            onClick={this.onClickRequestStart(this.state.connection)}
+          >
             Start game
           </Button>
         </React.Fragment>

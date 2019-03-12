@@ -120,9 +120,11 @@ export default class Server extends React.Component<
       } else {
         return (
           <React.Fragment>
-            <Grid>
+            <Grid container spacing={16}>
               {this.state.players.map(player => (
-                <PlayerInfo player={player} key={player.key} />
+                <Grid key={player.key} item xs={3}>
+                  <PlayerInfo player={player} />
+                </Grid>
               ))}
             </Grid>
             <TrackPlayer
@@ -136,10 +138,12 @@ export default class Server extends React.Component<
     } else {
       return (
         <React.Fragment>
-          <Typography variant="h1">Game over!</Typography>
-          <Grid>
+          <Typography variant="h3">Game over!</Typography>
+          <Grid container spacing={16}>
             {this.state.players.map(player => (
-              <PlayerInfo player={player} key={player.key} />
+              <Grid key={player.key} item xs={1}>
+                <PlayerInfo player={player} />
+              </Grid>
             ))}
           </Grid>
         </React.Fragment>
@@ -384,7 +388,11 @@ export default class Server extends React.Component<
         gameState: {
           currentTrackNumber,
           trackList: state.gameState.trackList
-        }
+        },
+        players: state.players.map(player => ({
+          ...player,
+          lastAnswer: undefined
+        }))
       };
     }
   }

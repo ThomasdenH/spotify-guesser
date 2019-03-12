@@ -14,7 +14,13 @@ const recommendationsResponseObject = iots.type({
   tracks: iots.array(track)
 });
 
+export const enum QuizQuestionType {
+  Artist,
+  Name
+}
+
 export interface QuizQuestion {
+  type: QuizQuestionType;
   options: string[];
 }
 
@@ -72,7 +78,8 @@ export async function getSongQuizQuestion(
   const correct = shuffled.indexOf(track);
   return {
     correct,
-    options: shuffled.map(track => track.name)
+    options: shuffled.map(track => track.name),
+    type: QuizQuestionType.Name
   };
 }
 
@@ -126,6 +133,7 @@ export async function getArtistQuizQuestion(
   const correct = shuffled.indexOf(chosenCorrectArtist);
   return {
     correct,
-    options: shuffled.map(artist => artist.name)
+    options: shuffled.map(artist => artist.name),
+    type: QuizQuestionType.Name
   };
 }

@@ -1,5 +1,5 @@
 import React from "react";
-import { QuizQuestion } from "../server/object/QuizQuestion";
+import { QuizQuestion, QuizQuestionType } from "../server/object/QuizQuestion";
 import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
 import { DeepReadonly } from "../util";
@@ -45,7 +45,11 @@ export default class QuestionPanel extends React.Component<Props, State> {
     const { answerResult } = this.props;
     return (
       <React.Fragment>
-        <Typography variant="h1">Who is an artist of this number?</Typography>
+        <Typography variant="h3">
+          {this.props.question.type === QuizQuestionType.Artist
+            ? "Who is an artist of this song?"
+            : "What is the name of this song?"}
+        </Typography>
         {this.props.question.options.map((option, index) => {
           const button = (
             <Button

@@ -31,15 +31,24 @@ export default class JoinRoom extends React.Component<Props, State> {
     } else {
       return (
         <React.Fragment>
-          <Typography variant="h1">{"Waiting for players..."}</Typography>
-          <Typography variant="body1">{`You can now join; use the following code:`}</Typography>
-          <Typography variant="body1" color="secondary">
+          <Typography variant="h3" style={{ marginBottom: 16 }}>
+            {"Waiting for players..."}
+          </Typography>
+          <Typography
+            variant="body1"
+            style={{ marginBottom: 16 }}
+          >{`You can now join; use the following code:`}</Typography>
+          <Typography variant="h2" style={{ margin: 16 }} color="secondary">
             {this.state.peerId}
           </Typography>
-          <Typography variant="h2">{"Current players"}</Typography>
+          <Typography variant="h3" style={{ marginTop: 16 }}>
+            {"Current players"}
+          </Typography>
           <List>
             {this.props.players.map(player => (
-              <ListItem key={player.key}>{player.name}</ListItem>
+              <ListItem key={player.key}>
+                <Typography variant="body1">{player.name}</Typography>
+              </ListItem>
             ))}
           </List>
         </React.Fragment>

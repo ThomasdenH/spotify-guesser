@@ -30,7 +30,7 @@ export default class ChoosePlaylist extends React.Component<Props, State> {
     if (typeof this.state.playlists !== "undefined") {
       return (
         <React.Fragment>
-          <Typography variant="h2" style={{ marginBottom: 16 }}>
+          <Typography variant="h3" style={{ marginBottom: 16 }}>
             {"Choose a playlist"}
           </Typography>
           <Grid container spacing={16} justify="center">
