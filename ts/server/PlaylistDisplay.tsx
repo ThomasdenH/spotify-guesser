@@ -1,5 +1,5 @@
 import { Playlist } from "./object/Playlist";
-import React from "React";
+import React from "react";
 import Card from "@material-ui/core/Card";
 import { CardMedia, Typography, CardActionArea } from "@material-ui/core";
 
@@ -26,7 +26,9 @@ export default class PlaylistDisplay extends React.Component<Props> {
             image={this.props.playlist.images[0].url}
             title={this.props.playlist.name}
           />
-          <Typography variant="h5" style={{margin: 8}}>{this.props.playlist.name}</Typography>
+          <Typography variant="h5" style={{ margin: 8 }}>
+            {this.props.playlist.name}
+          </Typography>
         </CardActionArea>
       </Card>
     );

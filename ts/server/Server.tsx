@@ -1,4 +1,4 @@
-import React from "React";
+import React from "react";
 import { LoginSuccess } from "ts/App";
 import { Playlist, getTrackFromPlaylist } from "./object/Playlist";
 import ChoosePlaylist from "./ChoosePlaylist";

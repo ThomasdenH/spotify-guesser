@@ -1,4 +1,4 @@
-import * as React from "React";
+import * as React from "react";
 import Client from "./client/Client";
 import Server from "./server/Server";
 import * as iots from "io-ts";

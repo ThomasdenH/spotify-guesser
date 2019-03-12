@@ -7,8 +7,8 @@ import {
 } from "./object/Playlist";
 import PlaylistDisplay from "./PlaylistDisplay";
 import "babel-polyfill";
-import Typography from '@material-ui/core/Typography';
-import Grid from '@material-ui/core/Grid';
+import Typography from "@material-ui/core/Typography";
+import Grid from "@material-ui/core/Grid";
 
 export interface Props {
   loginState: Readonly<LoginSuccess>;
@@ -30,7 +30,9 @@ export default class ChoosePlaylist extends React.Component<Props, State> {
     if (typeof this.state.playlists !== "undefined") {
       return (
         <React.Fragment>
-          <Typography variant="h2" style={{marginBottom: 16}}>{"Choose a playlist"}</Typography>
+          <Typography variant="h2" style={{ marginBottom: 16 }}>
+            {"Choose a playlist"}
+          </Typography>
           <Grid container spacing={16} justify="center">
             {this.state.playlists.map(playlist => (
               <Grid item xs={6} sm={3} key={playlist.id}>

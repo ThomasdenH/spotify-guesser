@@ -8,7 +8,7 @@ import { theme } from "./theme";
 ReactDOM.render(
   <MuiThemeProvider theme={theme}>
     <CssBaseline>
-      <div style={{padding: 16}}>
+      <div style={{ padding: 16 }}>
         <App />
       </div>
     </CssBaseline>
