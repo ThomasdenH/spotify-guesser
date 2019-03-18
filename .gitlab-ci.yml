@@ -1,0 +1,35 @@
+image: node:latest
+
+stages:
+  - install # Install dependencies
+  - test # Test code
+  - deploy # Deploy app
+
+install:
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths: ['node_modules/', 'yarn.lock']
+  artifacts:
+    paths: ['node_modules/', 'yarn.lock']
+  script:
+    - yarn install
+  stage: install
+
+typecheck:
+  stage: test
+  dependencies: ['install']
+  script: 'yarn typecheck'
+
+lint:
+  stage: test
+  dependencies: ['install']
+  script: 'yarn lint'
+
+pages:
+  stage: deploy
+  dependencies: ['install']
+  only: master
+  script: 'yarn build:deploy'
+  artifacts:
+    paths:
+    - public

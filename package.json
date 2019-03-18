@@ -7,7 +7,7 @@
     "typecheck": "tsc --noEmit",
     "start": "parcel index.html",
     "build": "parcel build index.html",
-    "build:deploy": "parcel build index.html --public-url /spotify-guesser/ --no-source-maps",
+    "build:deploy": "parcel build index.html --public-url /spotify-guesser/ --no-source-maps --out-dir public",
     "lint": "prettier \"**/*.{ts,tsx}\" && eslint \"**/*.{ts,tsx}\"",
     "lint-fix": "prettier --write \"**/*.{ts,tsx}\" && eslint --fix \"**/*.{ts,tsx}\"",
     "clean": "rimraf dist .cache",
