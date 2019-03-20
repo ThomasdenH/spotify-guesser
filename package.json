@@ -40,6 +40,6 @@
     "parcel-bundler": "^1.12.2",
     "prettier": "^1.16.4",
     "rimraf": "^2.6.3",
-    "typescript": "^3.3.3333"
+    "typescript": "^3.3.4000"
   }
 }
